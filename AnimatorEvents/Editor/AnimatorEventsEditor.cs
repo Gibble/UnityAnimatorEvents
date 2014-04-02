@@ -88,7 +88,7 @@ public class AnimatorEventsEditor : Editor {
 	/// </param>
 	private static int GetLayerCount (Animator animator) {
 		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
-		return animatorController.GetLayerCount();
+		return animatorController.layerCount;
 	}
 	
 	/// <summary>
@@ -105,8 +105,8 @@ public class AnimatorEventsEditor : Editor {
 		
 		List<string> layerNames = new List<string>();
 		
-		for (int i = 0; i < animatorController.GetLayerCount(); i++)
-			layerNames.Add(animatorController.GetLayerName(i));
+		for (int i = 0; i < animatorController.layerCount; i++)
+			layerNames.Add(animatorController.GetLayer(i).name);
 		
 		return layerNames.ToArray();
 	}
@@ -115,28 +115,50 @@ public class AnimatorEventsEditor : Editor {
 	
 	#region Animator State Methods	
 	private static int[] GetStateKeys (Animator animator, int layer) {
+		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
+		StateMachine stateMachine = animatorController.GetLayer(layer).stateMachine;				
+
+		return GetStateKeysFromStateMachine(stateMachine);
+	}
+
+	private static int[] GetStateKeysFromStateMachine(StateMachine sm)
+	{
 		List<int> stateKeys = new List<int>();
 		
-		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
-		StateMachine stateMachine = animatorController.GetLayerStateMachine(layer);
-		List<State> states = stateMachine.statesRecursive;
-		
-		foreach (State state in states) 
-			stateKeys.Add(state.GetUniqueNameHash());	
-		
+		for (int i = 0; i < sm.stateCount; ++i)
+		{
+			stateKeys.Add(sm.GetState(i).uniqueNameHash);
+		}
+
+		for (int i = 0; i < sm.stateMachineCount; ++i)
+		{
+			stateKeys.AddRange(GetStateKeysFromStateMachine(sm.GetStateMachine(i)));
+		}
+
 		return stateKeys.ToArray();
 	}
 	
-	private static string[] GetStateNames (Animator animator, int layer) {
-		List<string> stateNames = new List<string>();
-		
+	private static string[] GetStateNames (Animator animator, int layer) {		
 		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
-		StateMachine stateMachine = animatorController.GetLayerStateMachine(layer);
-		List<State> states = stateMachine.statesRecursive;
-		
-		foreach (State state in states) 
-			stateNames.Add(state.GetUniqueName());	
-		
+		StateMachine stateMachine = animatorController.GetLayer(layer).stateMachine;
+
+		return GetStateNamesFromStateMachine(stateMachine);
+	}
+
+	private static string[] GetStateNamesFromStateMachine(StateMachine sm)
+	{
+		List<string> stateNames = new List<string>();
+
+		for (int i = 0; i < sm.stateCount; ++i)
+		{
+			stateNames.Add(sm.GetState(i).uniqueName);
+		}
+
+		for (int i = 0; i < sm.stateMachineCount; ++i)
+		{
+			stateNames.AddRange(GetStateNamesFromStateMachine(sm.GetStateMachine(i)));
+		}
+
 		return stateNames.ToArray();
 	}
 	#endregion
@@ -147,13 +169,29 @@ public class AnimatorEventsEditor : Editor {
 		List<int> transitionKeys = new List<int>();
 		
 		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
-		StateMachine stateMachine = animatorController.GetLayerStateMachine(layer);
-		List<Transition> transitions = stateMachine.transitions;
-		
+		StateMachine stateMachine = animatorController.GetLayer(layer).stateMachine;
+			
+		return GetTransitionKeysFromStateMachine(stateMachine);
+	}
+
+	private static int[] GetTransitionKeysFromStateMachine(StateMachine sm)
+	{
+		List<int> transitionKeys = new List<int>();
+		List<Transition> transitions = new List<Transition>();
+
+		for (int i = 0; i < sm.stateCount; ++i)
+		{
+			transitions.AddRange(sm.GetTransitionsFromState(sm.GetState(i)));
+		}
+
 		foreach (Transition transition in transitions)
-			transitionKeys.Add (transition.GetUniqueNameHash());
-		
-		
+			transitionKeys.Add(transition.uniqueNameHash);
+
+		for (int i = 0; i < sm.stateMachineCount; ++i)
+		{
+			transitionKeys.AddRange(GetTransitionKeysFromStateMachine(sm.GetStateMachine(i)));
+		}
+
 		return transitionKeys.ToArray();
 	}
 	
@@ -161,13 +199,29 @@ public class AnimatorEventsEditor : Editor {
 		List<string> transitionNames = new List<string>();
 		
 		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
-		StateMachine stateMachine = animatorController.GetLayerStateMachine(layer);
-		List<Transition> transitions = stateMachine.transitions;
+		StateMachine stateMachine = animatorController.GetLayer(layer).stateMachine;
 		
+		return GetTransitionNamesFromStateMachine(stateMachine);
+	}
+
+	private static string[] GetTransitionNamesFromStateMachine(StateMachine sm)
+	{
+		List<string> transitionNames = new List<string>();
+		List<Transition> transitions = new List<Transition>();
+
+		for (int i = 0; i < sm.stateCount; ++i)
+		{
+			transitions.AddRange(sm.GetTransitionsFromState(sm.GetState(i)));
+		}
+
 		foreach (Transition transition in transitions)
-			transitionNames.Add (transition.GetDisplayName(false));
-		
-		
+			transitionNames.Add(transition.uniqueName);
+
+		for (int i = 0; i < sm.stateMachineCount; ++i)
+		{
+			transitionNames.AddRange(GetTransitionNamesFromStateMachine(sm.GetStateMachine(i)));
+		}
+
 		return transitionNames.ToArray();
 	}
 	
@@ -185,9 +239,36 @@ public class AnimatorEventsEditor : Editor {
 	/// </param>
 	public static int GetTransitionsCount (Animator animator, int layer) {
 		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
-		StateMachine stateMachine = animatorController.GetLayerStateMachine(layer);
-		
-		return stateMachine.transitionCount;
+		StateMachine stateMachine = animatorController.GetLayer(layer).stateMachine;
+
+		List<Transition> transitions = new List<Transition>();
+
+		for (int i = 0; i < stateMachine.stateCount; ++i)
+		{
+			transitions.AddRange(stateMachine.GetTransitionsFromState(stateMachine.GetState(i)));
+		}
+
+		return transitions.Count;
+	}
+
+	private static int GetTransitionsCountFromStateMachine(StateMachine sm)
+	{
+		int total = 0;
+		List<Transition> transitions = new List<Transition>();
+
+		for (int i = 0; i < sm.stateCount; ++i)
+		{
+			transitions.AddRange(sm.GetTransitionsFromState(sm.GetState(i)));
+		}
+
+		total = transitions.Count;
+
+		for (int i = 0; i < sm.stateMachineCount; ++i)
+		{
+			total += GetTransitionsCountFromStateMachine(sm.GetStateMachine(i));
+		}
+
+		return total;
 	}
 	
 	#endregion

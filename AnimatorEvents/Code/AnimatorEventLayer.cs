@@ -19,6 +19,9 @@ public class AnimatorEventLayer {
 	
 	[HideInInspector]
 	public AnimatorStateInfo previousState, currentState;
+
+	[HideInInspector]
+	public bool _stateIsInFlux = true;
 	
 	#if UNITY_EDITOR
 	[HideInInspector]
@@ -62,7 +65,12 @@ public class AnimatorEventLayer {
 	/// Name Hash.
 	/// </param>
 	public string GetStateName (int nameHash) {
-		return stateNames[nameHash];	
+		if (stateNames.ContainsKey(nameHash))
+		{
+			return stateNames[nameHash];
+		}
+		Debug.Log("GetStateName could not find " + nameHash);
+		return "";
 	}
 	
 	/// <summary>
@@ -75,6 +83,11 @@ public class AnimatorEventLayer {
 	/// Name hash.
 	/// </param>
 	public string GetTransitionName (int nameHash) {
-		return transitionNames[nameHash];	
+		if (transitionNames.ContainsKey(nameHash))
+		{
+			return transitionNames[nameHash];
+		}
+		Debug.Log("GetTransitionName could not find " + nameHash);
+		return "";
 	}
 }

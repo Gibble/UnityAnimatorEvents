@@ -13,6 +13,7 @@ public class AnimatorEvents : MonoBehaviour {
 	
 	#region Events and Delegates
 	public delegate void StateChangeHandler (int layer, AnimatorStateInfo previous, AnimatorStateInfo current);
+	public event StateChangeHandler OnStateChangeStep;
 	public event StateChangeHandler OnStateChanged;
 	
 	public delegate void TransitionHandler (int layer, AnimatorTransitionInfo transitionInfo);
@@ -30,11 +31,23 @@ public class AnimatorEvents : MonoBehaviour {
 			if (layers[layer].isListening) {
 				// State Change Verification
 				layers[layer].currentState = animator.GetCurrentAnimatorStateInfo(layer);
-				
-				if (layers[layer].previousState.nameHash != layers[layer].currentState.nameHash) {
+
+				// Last State Change
+				if (layers[layer].previousState.nameHash == layers[layer].currentState.nameHash &&
+ 					layers[layer]._stateIsInFlux == true &&
+					!animator.IsInTransition(layer))
+				{
 					if (OnStateChanged != null)
-						OnStateChanged (layer, layers[layer].previousState, layers[layer].currentState);
+						OnStateChanged(layer, layers[layer].previousState, layers[layer].currentState);
+					layers[layer]._stateIsInFlux = false;
+				}
+
+				// Intermediate State Changes
+				if (layers[layer].previousState.nameHash != layers[layer].currentState.nameHash) {
+					if (OnStateChangeStep != null)
+						OnStateChangeStep (layer, layers[layer].previousState, layers[layer].currentState);
 					layers[layer].previousState = layers[layer].currentState;
+					layers[layer]._stateIsInFlux = true;
 				}
 				
 				// Transition Change Verification
