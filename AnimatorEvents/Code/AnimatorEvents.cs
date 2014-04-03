@@ -19,14 +19,22 @@ public class AnimatorEvents : MonoBehaviour {
 	public delegate void TransitionHandler (int layer, AnimatorTransitionInfo transitionInfo);
 	public event TransitionHandler OnTransition;
 	#endregion
-	
+
+	private bool m_bRunOnce = false;
 	
 	void Start () {
 		foreach (AnimatorEventLayer animatorLayer in layers)
 			animatorLayer.MakeDictionaries();
 	}
-	
-	void FixedUpdate () {
+
+	void LateUpdate () {
+
+		if (!m_bRunOnce)
+		{
+			m_bRunOnce = true;
+			return;
+		}
+
 		for ( int layer = 0; layer < layers.Length; layer++) {
 			if (layers[layer].isListening) {
 				// State Change Verification

@@ -69,7 +69,8 @@ public class AnimatorEventLayer {
 		{
 			return stateNames[nameHash];
 		}
-		Debug.Log("GetStateName could not find " + nameHash);
+		if (nameHash != 0)
+			Debug.Log("GetStateName could not find " + nameHash);
 		return "";
 	}
 	
@@ -87,7 +88,8 @@ public class AnimatorEventLayer {
 		{
 			return transitionNames[nameHash];
 		}
-		Debug.Log("GetTransitionName could not find " + nameHash);
+		if (nameHash != 0)
+			Debug.Log("GetTransitionName could not find " + nameHash);
 		return "";
 	}
 }
