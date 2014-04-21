@@ -166,8 +166,6 @@ public class AnimatorEventsEditor : Editor {
 	#region Animator Transition Methods
 	
 	private static int[] GetTransitionKeys (Animator animator, int layer) {
-		List<int> transitionKeys = new List<int>();
-		
 		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
 		StateMachine stateMachine = animatorController.GetLayer(layer).stateMachine;
 			
@@ -196,8 +194,6 @@ public class AnimatorEventsEditor : Editor {
 	}
 	
 	private static string[] GetTransitionNames (Animator animator, int layer) {
-		List<string> transitionNames = new List<string>();
-		
 		AnimatorController animatorController = animator.runtimeAnimatorController as AnimatorController;
 		StateMachine stateMachine = animatorController.GetLayer(layer).stateMachine;
 		
